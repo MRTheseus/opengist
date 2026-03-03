@@ -21,6 +21,11 @@
                       <a href="{{ $.c.ExternalUrl }}/{{ $.gist.User.Username }}/{{ $.gist.Identifier }}/raw/{{ $.commit }}/{{$file.Filename}}" class="relative inline-flex items-center rounded-l-md bg-white text-gray-500 dark:text-slate-300 float-right px-2.5 py-1 leading-4 text-xs font-medium dark:bg-gray-600 border border-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-slate-700 dark:hover:text-slate-300 select-none">
                         {{ $.locale.Tr "gist.raw" }}
                       </a>
+                      <button type="button" class="qr-code-btn relative inline-flex items-center rounded-md bg-white text-gray-500 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-10 px-2 py-1 dark:text-slate-300 dark:bg-gray-600 dark:hover:bg-gray-700" aria-label="Show QR Code">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                        </svg>
+                      </button>
                     {{ if $file.MimeType.IsText }}
                       <button type="button" class="relative -ml-px inline-flex items-center bg-white text-gray-500 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-10 px-1 py-1 dark:text-slate-300 dark:bg-gray-600 dark:hover:bg-gray-700 copy-gist-btn">
                           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
@@ -127,6 +132,24 @@
 
 <!-- make sure tailwind knows those classes -->
 <button type="button" style="top: 1em !important; right: 1em !important;" class="hidden md-code-copy-btn absolute right-0 top-0 focus-within:z-auto rounded-md dark:border-gray-600 px-2 py-2 opacity-80 font-medium text-slate-700 bg-gray-100 dark:bg-gray-700 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-gray-600 hover:border-gray-500 hover:text-slate-700 dark:hover:text-slate-300 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 7.5V6.108c0-1.135.845-2.098 1.976-2.192.373-.03.748-.057 1.123-.08M15.75 18H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08M15.75 18.75v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5A3.375 3.375 0 006.375 7.5H5.25m11.9-3.664A2.251 2.251 0 0015 2.25h-1.5a2.251 2.251 0 00-2.15 1.586m5.8 0c.065.21.1.433.1.664v.75h-6V4.5c0-.231.035-.454.1-.664M6.75 7.5H4.875c-.621 0-1.125.504-1.125 1.125v12c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V16.5a9 9 0 00-9-9z" /></svg></button>
+
+<!-- QR Code Modal -->
+<div id="qr-modal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true">
+  <div class="fixed inset-0 bg-black bg-opacity-50 transition-opacity" id="qr-modal-backdrop"></div>
+  <div class="fixed inset-0 flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-sm w-full p-6 relative">
+      <button type="button" id="qr-modal-close" class="absolute top-2 right-2 text-gray-400 hover:text-gray-500 dark:hover:text-gray-300">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+      <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">QR Code</h3>
+      <div id="qr-code-container" class="flex justify-center mb-4"></div>
+      <p id="qr-code-url" class="text-sm text-gray-500 dark:text-gray-400 break-all text-center"></p>
+    </div>
+  </div>
+</div>
+
 <div class="accent-gray-400"></div>
 
 <script type="module" src="{{ asset "ts/gist.ts" }}"></script>

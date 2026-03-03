@@ -1,5 +1,56 @@
 import '../ts/ipynb.ts';
 
+// QR Code Modal functionality
+let currentQrUrl = '';
+const qrModal = document.getElementById('qr-modal');
+const qrModalClose = document.getElementById('qr-modal-close');
+const qrModalBackdrop = document.getElementById('qr-modal-backdrop');
+const qrCodeContainer = document.getElementById('qr-code-container');
+const qrCodeUrl = document.getElementById('qr-code-url');
+
+if (qrModal && qrModalClose && qrModalBackdrop && qrCodeContainer && qrCodeUrl) {
+  // Close modal when clicking backdrop or close button
+  qrModalClose.addEventListener('click', () => qrModal.classList.add('hidden'));
+  qrModalBackdrop.addEventListener('click', () => qrModal.classList.add('hidden'));
+
+  // Generate QR Code
+  function showQrCode(url: string) {
+    currentQrUrl = url;
+    qrCodeUrl.textContent = url;
+    qrCodeContainer.innerHTML = '';
+    qrCodeUrl.textContent = url;
+
+    import('qrcode').then(qrcode => {
+      qrcode.toCanvas(qrCodeContainer, url, {
+        width: 200,
+        margin: 2,
+        color: {
+          dark: '#000000',
+          light: '#ffffff'
+        }
+      }).catch(err => {
+        console.error('Failed to generate QR Code:', err);
+        qrCodeContainer.innerHTML = '<p class="text-red-500">Failed to generate QR Code</p>';
+      });
+    }).catch(err => {
+      console.error('Failed to load qrcode library:', err);
+      qrCodeContainer.innerHTML = '<p class="text-red-500">Failed to load QR Code library</p>';
+    });
+  }
+
+  // Add click handlers to QR Code buttons
+  document.querySelectorAll('.qr-code-btn').forEach((button) => {
+    button.addEventListener('click', () => {
+      const rawUrl = button.closest<HTMLElement>('.border')?.querySelector('a[href*="/raw/"]')?.getAttribute('href');
+      if (rawUrl) {
+        const fullUrl = new URL(rawUrl, window.location.origin).href;
+        showQrCode(fullUrl);
+        qrModal.classList.remove('hidden');
+      }
+    });
+  });
+}
+
 document.querySelectorAll<HTMLElement>('.table-code').forEach((el) => {
     el.addEventListener('click', event => {
         if (event.target && (event.target as HTMLElement).matches('.line-num')) {
