@@ -1,4 +1,5 @@
 import '../ts/ipynb.ts';
+import * as QRCode from 'qrcode';
 
 // QR Code Modal functionality
 let currentQrUrl = '';
@@ -8,10 +9,18 @@ const qrModalBackdrop = document.getElementById('qr-modal-backdrop');
 const qrCodeContainer = document.getElementById('qr-code-container');
 const qrCodeUrl = document.getElementById('qr-code-url');
 
-if (qrModal && qrModalClose && qrModalBackdrop && qrCodeContainer && qrCodeUrl) {
-  // Close modal when clicking backdrop or close button
+const qrModalContent = document.getElementById('qr-modal-content');
+
+if (qrModal && qrModalClose && qrModalBackdrop && qrCodeContainer && qrCodeUrl && qrModalContent) {
+  // Close modal when clicking close button
   qrModalClose.addEventListener('click', () => qrModal.classList.add('hidden'));
-  qrModalBackdrop.addEventListener('click', () => qrModal.classList.add('hidden'));
+
+  // Close modal when clicking backdrop (outside content)
+  qrModalBackdrop.addEventListener('click', (event) => {
+    if (event.target === qrModalBackdrop) {
+      qrModal.classList.add('hidden');
+    }
+  });
 
   // Generate QR Code
   function showQrCode(url: string) {
@@ -20,21 +29,19 @@ if (qrModal && qrModalClose && qrModalBackdrop && qrCodeContainer && qrCodeUrl) 
     qrCodeContainer.innerHTML = '';
     qrCodeUrl.textContent = url;
 
-    import('qrcode').then(qrcode => {
-      qrcode.toCanvas(qrCodeContainer, url, {
-        width: 200,
-        margin: 2,
-        color: {
-          dark: '#000000',
-          light: '#ffffff'
-        }
-      }).catch(err => {
-        console.error('Failed to generate QR Code:', err);
-        qrCodeContainer.innerHTML = '<p class="text-red-500">Failed to generate QR Code</p>';
-      });
+    const canvas = document.createElement('canvas');
+    qrCodeContainer.appendChild(canvas);
+
+    QRCode.toCanvas(canvas, url, {
+      width: 200,
+      margin: 2,
+      color: {
+        dark: '#000000',
+        light: '#ffffff'
+      }
     }).catch(err => {
-      console.error('Failed to load qrcode library:', err);
-      qrCodeContainer.innerHTML = '<p class="text-red-500">Failed to load QR Code library</p>';
+      console.error('Failed to generate QR Code:', err);
+      qrCodeContainer.innerHTML = '<p class="text-red-500">Failed to generate QR Code</p>';
     });
   }
 

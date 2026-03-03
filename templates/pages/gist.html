@@ -21,7 +21,7 @@
                       <a href="{{ $.c.ExternalUrl }}/{{ $.gist.User.Username }}/{{ $.gist.Identifier }}/raw/{{ $.commit }}/{{$file.Filename}}" class="relative inline-flex items-center rounded-l-md bg-white text-gray-500 dark:text-slate-300 float-right px-2.5 py-1 leading-4 text-xs font-medium dark:bg-gray-600 border border-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-slate-700 dark:hover:text-slate-300 select-none">
                         {{ $.locale.Tr "gist.raw" }}
                       </a>
-                      <button type="button" class="qr-code-btn relative inline-flex items-center rounded-md bg-white text-gray-500 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-10 px-2 py-1 dark:text-slate-300 dark:bg-gray-600 dark:hover:bg-gray-700" aria-label="Show QR Code">
+                      <button type="button" class="qr-code-btn relative inline-flex items-center bg-white text-gray-500 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-10 px-2 py-1 dark:text-slate-300 dark:bg-gray-600 dark:hover:bg-gray-700" aria-label="Show QR Code">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
                           <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
                         </svg>
@@ -135,9 +135,8 @@
 
 <!-- QR Code Modal -->
 <div id="qr-modal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true">
-  <div class="fixed inset-0 bg-black bg-opacity-50 transition-opacity" id="qr-modal-backdrop"></div>
-  <div class="fixed inset-0 flex items-center justify-center p-4">
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-sm w-full p-6 relative">
+  <div class="fixed inset-0 flex items-center justify-center p-4" id="qr-modal-backdrop">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-sm w-full p-6 relative" id="qr-modal-content">
       <button type="button" id="qr-modal-close" class="absolute top-2 right-2 text-gray-400 hover:text-gray-500 dark:hover:text-gray-300">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
           <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
