@@ -223,4 +223,78 @@
         </div>
     </main>
 </div>
+
+<!-- QR Code Modal for All page -->
+<div id="qr-modal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true">
+  <div class="fixed inset-0 flex items-center justify-center p-4" id="qr-modal-backdrop">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-sm w-full p-6 relative" id="qr-modal-content">
+      <button type="button" id="qr-modal-close" class="absolute top-2 right-2 text-gray-400 hover:text-gray-500 dark:hover:text-gray-300">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+      <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">QR Code</h3>
+      <div id="qr-code-container" class="flex justify-center mb-4"></div>
+      <p id="qr-code-url" class="text-sm text-gray-500 dark:text-gray-400 break-all text-center"></p>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  // QR Code functionality for all page
+  import * as QRCode from 'https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm';
+
+  const qrModal = document.getElementById('qr-modal');
+  const qrModalClose = document.getElementById('qr-modal-close');
+  const qrModalBackdrop = document.getElementById('qr-modal-backdrop');
+  const qrCodeContainer = document.getElementById('qr-code-container');
+  const qrCodeUrl = document.getElementById('qr-code-url');
+
+  if (qrModal && qrModalClose && qrModalBackdrop && qrCodeContainer && qrCodeUrl) {
+    qrModalClose.addEventListener('click', () => qrModal.classList.add('hidden'));
+    qrModalBackdrop.addEventListener('click', (event) => {
+      if (event.target === qrModalBackdrop) {
+        qrModal.classList.add('hidden');
+      }
+    });
+
+    document.querySelectorAll('.qr-code-btn').forEach((button) => {
+      button.addEventListener('click', () => {
+        const gistUrl = button.getAttribute('data-gist-url');
+        if (gistUrl) {
+          qrCodeUrl.textContent = gistUrl;
+          qrCodeContainer.innerHTML = '';
+          const canvas = document.createElement('canvas');
+          qrCodeContainer.appendChild(canvas);
+          QRCode.toCanvas(canvas, gistUrl, {
+            width: 200,
+            margin: 2,
+            color: { dark: '#000000', light: '#ffffff' }
+          }).catch(err => {
+            console.error('Failed to generate QR Code:', err);
+            qrCodeContainer.innerHTML = '<p class="text-red-500">Failed to generate QR Code</p>';
+          });
+          qrModal.classList.remove('hidden');
+        }
+      });
+    });
+
+    // Copy URL functionality
+    document.querySelectorAll('.copy-gist-url-btn').forEach((button) => {
+      button.addEventListener('click', () => {
+        const copyUrl = button.getAttribute('data-copy-url');
+        if (copyUrl) {
+          navigator.clipboard.writeText(copyUrl).then(() => {
+            const originalTitle = button.getAttribute('title');
+            button.setAttribute('title', 'Copied!');
+            setTimeout(() => button.setAttribute('title', originalTitle), 2000);
+          }).catch(err => {
+            console.error('Failed to copy:', err);
+          });
+        }
+      });
+    });
+  }
+</script>
+
 {{ template "footer" .}}

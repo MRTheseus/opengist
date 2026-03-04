@@ -17,6 +17,29 @@
                     <h4 class="text-md leading-tight break-all py-1 flex-auto">
                         <a href="{{ .c.ExternalUrl }}/{{ .gist.User.Username }}">{{ .gist.User.Username }}</a> <span class="text-slate-700 dark:text-slate-300">/</span> <a class="font-bold" href="{{ .c.ExternalUrl }}/{{ .gist.User.Username }}/{{ .gist.Identifier }}">{{ .gist.Title }}</a>
                     </h4>
+                    <!-- Quick action icons -->
+                    <div class="flex items-center lg:py-0 py-1 lg:ml-2 space-x-1">
+                        <a href="{{ .c.ExternalUrl }}/{{ .gist.User.Username }}/{{ .gist.Identifier }}/raw/HEAD/{{ .gist.PreviewFilename }}" target="_blank" class="p-1.5 text-slate-500 hover:text-primary-600 dark:text-slate-400 dark:hover:text-primary-400 rounded hover:bg-gray-100 dark:hover:bg-gray-700" title="{{ .locale.Tr "gist.raw" }}">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
+                            </svg>
+                        </a>
+                        <button type="button" class="qr-code-btn p-1.5 text-slate-500 hover:text-primary-600 dark:text-slate-400 dark:hover:text-primary-400 rounded hover:bg-gray-100 dark:hover:bg-gray-700" data-gist-url="{{ .c.ExternalUrl }}/{{ .gist.User.Username }}/{{ .gist.Identifier }}" title="QR Code">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                            </svg>
+                        </button>
+                        <button type="button" class="copy-gist-url-btn p-1.5 text-slate-500 hover:text-primary-600 dark:text-slate-400 dark:hover:text-primary-400 rounded hover:bg-gray-100 dark:hover:bg-gray-700" data-copy-url="{{ .c.ExternalUrl }}/{{ .gist.User.Username }}/{{ .gist.Identifier }}" title="Copy URL">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 01-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 011.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 00-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 01-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 00-3.375-3.375h-1.5a1.125 1.125 0 01-1.125-1.125v-1.5a3.375 3.375 0 00-3.375-3.375H9.75" />
+                            </svg>
+                        </button>
+                        <a href="{{ .c.ExternalUrl }}/{{ .gist.User.Username }}/{{ .gist.Identifier }}/archive" download class="p-1.5 text-slate-500 hover:text-primary-600 dark:text-slate-400 dark:hover:text-primary-400 rounded hover:bg-gray-100 dark:hover:bg-gray-700" title="Download ZIP">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                            </svg>
+                        </a>
+                    </div>
                     <div class="flex space-x-4 lg:flex-row flex py-1 lg:py-0 lg:ml-auto text-slate-500">
                         <div class="flex items-center float-right text-xs">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-1 inline-flex">
