@@ -260,13 +260,17 @@
 
     document.querySelectorAll('.qr-code-btn').forEach((button) => {
       button.addEventListener('click', () => {
-        const gistUrl = button.getAttribute('data-gist-url');
-        if (gistUrl) {
-          qrCodeUrl.textContent = gistUrl;
+        // Find the raw file link - traverse up to the quick action container
+        const container = button.parentElement;
+        const rawLink = container?.querySelector('a[href*="/raw/"]');
+        const rawUrl = rawLink?.getAttribute('href');
+        if (rawUrl) {
+          const fullUrl = new URL(rawUrl, window.location.origin).href;
+          qrCodeUrl.textContent = fullUrl;
           qrCodeContainer.innerHTML = '';
           const canvas = document.createElement('canvas');
           qrCodeContainer.appendChild(canvas);
-          QRCode.toCanvas(canvas, gistUrl, {
+          QRCode.toCanvas(canvas, fullUrl, {
             width: 200,
             margin: 2,
             color: { dark: '#000000', light: '#ffffff' }
