@@ -1,28 +1,38 @@
 package session
 
 import (
-	"github.com/gorilla/securecookie"
-	"github.com/rs/zerolog/log"
-	"os"
+	"github.com/gorilla/sessions"
+	"github.com/labstack/echo/v4"
+	"github.com/thomiceli/opengist/internal/config"
 )
 
-// GenerateSecretKey generates a new secret key for sessions
-// Returns the key and a boolean indicating if the key was generated
-func GenerateSecretKey(filePath string) ([]byte, bool) {
-	key, err := os.ReadFile(filePath)
-	if err == nil {
-		return key, false
-	}
+type Session = sessions.Session
 
-	key = securecookie.GenerateRandomKey(32)
-	if key == nil {
-		log.Fatal().Msg("Failed to generate a new key for sessions")
-	}
+var store *sessions.CookieStore
 
-	err = os.WriteFile(filePath, key, 0600)
+func Init() {
+	store = sessions.NewCookieStore([]byte(config.C.SecretKey))
+	store.Options = &sessions.Options{
+		Path:     "/",
+		MaxAge:   60 * 60 * 24 * 365,
+		HttpOnly: true,
+		Secure:   false,
+	}
+}
+
+func Get(c echo.Context, name string) (*Session, error) {
+	return store.Get(c.Request(), name)
+}
+
+func Save(c echo.Context, sess *Session) error {
+	return sess.Save(c.Request(), c.Response())
+}
+
+func Delete(c echo.Context, name string) error {
+	sess, err := store.Get(c.Request(), name)
 	if err != nil {
-		log.Fatal().Err(err).Msgf("Failed to save the key to %s", filePath)
+		return err
 	}
-
-	return key, true
+	sess.Options.MaxAge = -1
+	return sess.Save(c.Request(), c.Response())
 }

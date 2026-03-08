@@ -1,0 +1,115 @@
+{{template "header.html" .}}
+<div class="max-w-5xl mx-auto px-6 py-8">
+    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
+        <div>
+            <h1 class="text-3xl font-bold text-slate-800 mb-2">{{.gist.Title}}</h1>
+            <div class="flex flex-wrap items-center gap-2 text-sm text-slate-500">
+                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium {{if eq (toInt .gist.Visibility) 1}}bg-amber-100 text-amber-700{{else}}bg-blue-100 text-blue-700{{end}}">
+                    {{if eq (toInt .gist.Visibility) 1}}私有{{else}}公开{{end}}
+                </span>
+                <span class="text-slate-300">•</span>
+                <span class="font-mono">{{.gist.CreatedAt | formatTime}}</span>
+                <span class="text-slate-300">•</span>
+                <span class="font-mono">{{.gist.Filename}}</span>
+            </div>
+        </div>
+        {{if .user}}
+        <div class="flex items-center gap-2">
+            <a href="/{{.gist.Title}}/edit" class="px-4 py-2 border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-all font-medium">
+                编辑
+            </a>
+            <form action="/{{.gist.Title}}/delete" method="post" class="inline" onsubmit="return confirm('确定要删除此gist吗？')">
+                <button type="submit" class="px-4 py-2 text-rose-500 hover:bg-rose-50 rounded-xl transition-all font-medium hover:text-rose-600">
+                    删除
+                </button>
+            </form>
+        </div>
+        {{end}}
+    </div>
+    
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="bg-slate-800 px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <div class="terminal-dots">
+                    <div class="terminal-dot terminal-dot-red"></div>
+                    <div class="terminal-dot terminal-dot-yellow"></div>
+                    <div class="terminal-dot terminal-dot-green"></div>
+                </div>
+                <span class="text-slate-400 font-mono text-sm">{{.gist.Filename}}</span>
+            </div>
+            <div class="flex items-center gap-1">
+                <a href="/{{.gist.Title}}" class="terminal-btn relative group/btn">
+                    Raw
+                    <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded opacity-0 group-hover/btn:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">原始文件</span>
+                </a>
+                <button onclick="showQR()" class="terminal-btn relative group/btn">
+                    QR
+                    <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded opacity-0 group-hover/btn:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">二维码</span>
+                </button>
+                <button onclick="copyContent()" class="terminal-btn relative group/btn">
+                    Copy
+                    <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded opacity-0 group-hover/btn:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">复制内容</span>
+                </button>
+            </div>
+        </div>
+        <div class="bg-slate-900 p-6 overflow-x-auto">
+            <pre class="text-slate-100 font-mono text-sm leading-relaxed"><code>{{.gist.Content}}</code></pre>
+        </div>
+    </div>
+    
+    <div class="mt-6 flex items-center justify-between">
+        <a href="/{{.gist.Title}}/revisions" class="inline-flex items-center text-indigo-600 hover:text-indigo-700 font-medium transition-colors">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0a9 9 0 0118 0z"></path></svg>
+            查看修订历史
+        </a>
+        <a href="/all" class="text-slate-500 hover:text-slate-700 transition-colors">
+            返回列表
+        </a>
+    </div>
+</div>
+
+<div id="qr-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center z-50" onclick="closeQR()">
+    <div class="bg-white rounded-2xl shadow-2xl p-6 w-80" onclick="event.stopPropagation()">
+        <div id="qr-code" class="flex justify-center mb-4"></div>
+        <div class="flex items-center gap-2">
+            <input type="text" id="qr-url" readonly class="flex-1 px-3 py-2 bg-slate-100 rounded-lg text-sm font-mono text-slate-600 border-0">
+            <button onclick="copyQRUrl()" class="px-3 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-all">
+                复制
+            </button>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.bootcdn.net/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+function copyContent() {
+    navigator.clipboard.writeText(document.querySelector('pre code').textContent);
+}
+
+var currentQRUrl = '';
+function showQR() {
+    var url = window.location.origin + '/' + '{{.gist.Title}}';
+    currentQRUrl = url;
+    var qrDiv = document.getElementById('qr-code');
+    qrDiv.innerHTML = '';
+    new QRCode(qrDiv, {
+        text: url,
+        width: 180,
+        height: 180
+    });
+    document.getElementById('qr-url').value = url;
+    var modal = document.getElementById('qr-modal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+
+function closeQR() {
+    var modal = document.getElementById('qr-modal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+}
+
+function copyQRUrl() {
+    navigator.clipboard.writeText(currentQRUrl);
+}
+</script>
+{{template "footer.html" .}}

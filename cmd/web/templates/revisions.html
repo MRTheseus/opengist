@@ -1,0 +1,47 @@
+{{template "header.html" .}}
+<div class="max-w-4xl mx-auto px-6 py-8">
+    <div class="mb-8">
+        <h1 class="text-2xl font-bold text-slate-800 mb-2">{{.gist.Title}}</h1>
+        <p class="text-slate-500">修订历史</p>
+    </div>
+    
+    {{if .revisions}}
+    <div class="relative pl-12">
+        <div class="timeline-line"></div>
+        
+        {{range $index, $rev := .revisions}}
+        <div class="relative mb-6 last:mb-0">
+            <div class="timeline-node" style="top: 8px;"></div>
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md hover:border-slate-300 transition-all duration-200 p-5">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        <span class="text-lg font-bold font-mono text-indigo-600">v{{.Version}}</span>
+                        <span class="text-sm text-slate-500 font-mono">{{.CreatedAt | formatTime}}</span>
+                    </div>
+                    <a href="/{{$.gist.Title}}/revisions/{{.Version}}" 
+                        class="inline-flex items-center px-4 py-2 bg-slate-100 rounded-lg text-slate-600 hover:bg-slate-200 transition-all text-sm font-medium">
+                        查看详情
+                        <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+        {{end}}
+    </div>
+    {{else}}
+    <div class="bg-white rounded-xl border border-slate-200 p-12 text-center">
+        <svg class="w-16 h-16 text-slate-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <p class="text-slate-500 text-lg">暂无修订历史</p>
+    </div>
+    {{end}}
+    
+    <div class="mt-8">
+        <a href="/{{.gist.Title}}/detail" class="inline-flex items-center text-indigo-600 hover:text-indigo-700 font-medium transition-colors">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+            返回详情
+        </a>
+    </div>
+</div>
+{{template "footer.html" .}}

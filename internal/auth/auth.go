@@ -1,18 +1,14 @@
 package auth
 
-type AuthInfoProvider interface {
-	RequireLogin() (bool, error)
-	AllowGistsWithoutLogin() (bool, error)
+import (
+	passwordpkg "github.com/thomiceli/opengist/internal/auth/password"
+	"github.com/thomiceli/opengist/internal/db"
+)
+
+func VerifyPassword(user *db.User, password string) bool {
+	return passwordpkg.VerifyPassword(user.Password, password)
 }
 
-func ShouldAllowUnauthenticatedGistAccess(prov AuthInfoProvider, isSingleGistAccess bool) (bool, error) {
-	require, err := prov.RequireLogin()
-	if err != nil {
-		return false, err
-	}
-	allow, err := prov.AllowGistsWithoutLogin()
-	if err != nil {
-		return false, err
-	}
-	return !require || (isSingleGistAccess && allow), nil
+func HashPassword(password string) (string, error) {
+	return passwordpkg.HashPassword(password)
 }

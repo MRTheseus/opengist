@@ -1,0 +1,10 @@
+version: '3'
+
+services:
+  closegist:
+    build: .
+    ports:
+      - "6157:6157"
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped

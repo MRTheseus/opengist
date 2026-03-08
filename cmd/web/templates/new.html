@@ -1,0 +1,39 @@
+{{template "header.html" .}}
+<div class="max-w-4xl mx-auto px-6 py-8">
+    <form action="/new" method="post" class="flex flex-col gap-6">
+        <div class="space-y-2">
+            <label for="title" class="text-sm font-medium text-slate-600">标题</label>
+            <input type="text" id="title" name="title" value="{{.form.title}}"
+                class="w-full text-lg text-slate-700 bg-white border border-slate-300 rounded-lg focus:border-indigo-400 focus:outline-none px-4 py-2 placeholder:text-sm placeholder:text-slate-400 transition-colors"
+                placeholder="输入标题（仅限字母和数字）" required pattern="[A-Za-z0-9]+">
+            <p class="text-xs text-slate-500">仅支持字母和数字，用于生成访问链接</p>
+        </div>
+        
+        <div class="flex flex-wrap items-center gap-4">
+            <div class="flex items-center gap-2">
+                <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <select name="visibility" class="bg-slate-100 rounded-lg px-3 py-2 text-slate-700 text-sm border-0 focus:ring-2 focus:ring-indigo-500/20 transition-all">
+                    <option value="public" {{if eq .form.visibility "public"}}selected{{end}}>公开</option>
+                    <option value="private" {{if eq .form.visibility "private"}}selected{{end}}>私有</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            <textarea name="content" rows="20"
+                class="w-full bg-slate-900 text-slate-100 font-mono text-sm p-6 border-0 focus:ring-0 resize-none placeholder-slate-500" 
+                placeholder="// 在这里编写代码..." required>{{.form.content}}</textarea>
+        </div>
+        
+        <div class="flex items-center justify-end gap-3">
+            <a href="/all" class="px-6 py-2.5 text-slate-500 hover:text-slate-700 transition-colors">
+                取消
+            </a>
+            <button type="submit" 
+                class="px-6 py-2.5 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 transition-all active:scale-[0.98] shadow-lg shadow-indigo-500/25">
+                保存
+            </button>
+        </div>
+    </form>
+</div>
+{{template "footer.html" .}}

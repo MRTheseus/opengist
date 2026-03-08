@@ -1,0 +1,51 @@
+{{template "header.html" .}}
+<div class="max-w-5xl mx-auto px-6 py-8">
+    <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+            <span class="text-amber-800 font-medium">正在查看历史版本：<span class="font-mono">v{{.revision.Version}}</span></span>
+        </div>
+        <a href="/{{.gist.Title}}/detail" class="px-4 py-2 bg-amber-600 text-white rounded-lg text-sm font-medium hover:bg-amber-700 transition-all">
+            返回最新版
+        </a>
+    </div>
+    
+    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
+        <div>
+            <h1 class="text-3xl font-bold text-slate-800 mb-2">{{.gist.Title}}</h1>
+            <div class="flex flex-wrap items-center gap-2 text-sm text-slate-500">
+                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium {{if eq (toInt .revision.Visibility) 1}}bg-amber-100 text-amber-700{{else}}bg-blue-100 text-blue-700{{end}}">
+                    {{if eq (toInt .revision.Visibility) 1}}私有{{else}}公开{{end}}
+                </span>
+                <span class="text-slate-300">•</span>
+                <span class="font-mono">{{.revision.CreatedAt | formatTime}}</span>
+                <span class="text-slate-300">•</span>
+                <span class="font-mono">{{.revision.Filename}}</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="bg-slate-800 px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <div class="terminal-dots">
+                    <div class="terminal-dot terminal-dot-red"></div>
+                    <div class="terminal-dot terminal-dot-yellow"></div>
+                    <div class="terminal-dot terminal-dot-green"></div>
+                </div>
+                <span class="text-slate-400 font-mono text-sm">{{.revision.Filename}}</span>
+            </div>
+        </div>
+        <div class="bg-slate-900 p-6 overflow-x-auto">
+            <pre class="text-slate-100 font-mono text-sm leading-relaxed"><code>{{.revision.Content}}</code></pre>
+        </div>
+    </div>
+    
+    <div class="mt-6">
+        <a href="/{{.gist.Title}}/revisions" class="inline-flex items-center text-indigo-600 hover:text-indigo-700 font-medium transition-colors">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+            返回修订列表
+        </a>
+    </div>
+</div>
+{{template "footer.html" .}}

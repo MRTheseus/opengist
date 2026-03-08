@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.config.CustomName}}</title>
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <link rel="alternate icon" href="/static/favicon.svg">
+    <meta name="theme-color" content="#6366f1">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        mono: ['Consolas', 'Monaco', 'Courier New', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .icon-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            color: #64748b;
+            cursor: pointer;
+        }
+        .icon-btn:hover {
+            background-color: #f1f5f9;
+            color: #1e293b;
+            transform: translateY(-1px);
+        }
+        .icon-btn:active {
+            transform: scale(0.95);
+        }
+        .icon-btn svg {
+            width: 20px;
+            height: 20px;
+        }
+        .toast-enter {
+            animation: fadeIn 0.2s ease-out;
+        }
+        .toast-leave {
+            animation: fadeOut 0.2s ease-in forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+        .code-preview {
+            font-family: Consolas, Monaco, 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+        .timeline-line {
+            position: absolute;
+            left: 24px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(to bottom, #e2e8f0, #cbd5e1);
+        }
+        .timeline-node {
+            position: absolute;
+            left: 16px;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: white;
+            border: 2px solid #6366f1;
+        }
+        .terminal-dots {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .terminal-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        .terminal-dot-red { background-color: #ff5f56; }
+        .terminal-dot-yellow { background-color: #ffbd2e; }
+        .terminal-dot-green { background-color: #27c93f; }
+        .terminal-btn {
+            padding: 6px 12px;
+            color: #94a3b8;
+            font-size: 14px;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .terminal-btn:hover {
+            color: #ffffff;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        .logo-svg {
+            width: 36px;
+            height: 36px;
+        }
+        .logo-svg rect {
+            fill: #6366f1;
+            transition: fill 0.2s ease;
+        }
+        .group:hover .logo-svg rect {
+            fill: #4f46e5;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen flex flex-col">
+    <nav class="fixed top-0 w-full h-16 bg-white/80 backdrop-blur-md border-b border-slate-200 z-40">
+        <div class="max-w-7xl mx-auto px-6 h-full flex justify-between items-center">
+            <a href="/all" class="flex items-center space-x-3 group">
+                <svg class="logo-svg transition-transform group-hover:scale-105" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="2" y="2" width="28" height="28" rx="7"/>
+                    <path d="M10 11l-4 5 4 5" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M14 21h8" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+                    <circle cx="21" cy="11" r="2" fill="white"/>
+                </svg>
+                <span class="text-xl font-bold text-slate-800">{{.config.CustomName}}</span>
+            </a>
+            <div class="flex items-center space-x-1">
+                {{if .user}}
+                <a href="/all" class="icon-btn" title="全部">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>
+                </a>
+                <a href="/new" class="icon-btn" title="新建">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                </a>
+                <div class="relative">
+                    <button id="settings-btn" class="icon-btn" title="设置">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    </button>
+                    <div id="settings-menu" class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-slate-200 hidden z-50 overflow-hidden">
+                        <a href="/settings/password" class="block px-4 py-3 text-slate-700 hover:bg-slate-50 transition-colors">修改密码</a>
+                        <a href="/logout" class="block px-4 py-3 text-slate-700 hover:bg-slate-50 transition-colors border-t border-slate-100">登出</a>
+                    </div>
+                </div>
+                {{else}}
+                <a href="/login" class="text-slate-600 hover:text-slate-900 font-medium transition-colors">登录</a>
+                {{end}}
+            </div>
+        </div>
+    </nav>
+    
+    <main class="flex-1 mt-16">
+        <div id="flash-container" class="fixed top-6 left-1/2 -translate-x-1/2 z-[60]">
+            {{range .flashes}}
+            <div class="bg-white rounded-xl shadow-lg border mb-2 flex items-center space-x-3 px-5 py-3 toast-enter {{if eq .Type "success"}}border-emerald-200{{else}}border-rose-200{{end}}">
+                {{if eq .Type "success"}}
+                <div class="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                    <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                </div>
+                <span class="text-slate-700 font-medium">{{.Message}}</span>
+                {{else}}
+                <div class="w-8 h-8 rounded-full bg-rose-100 flex items-center justify-center flex-shrink-0">
+                    <svg class="w-5 h-5 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </div>
+                <span class="text-slate-700 font-medium">{{.Message}}</span>
+                {{end}}
+            </div>
+            {{end}}
+        </div>
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var settingsBtn = document.getElementById('settings-btn');
+        var settingsMenu = document.getElementById('settings-menu');
+        if (settingsBtn && settingsMenu) {
+            settingsBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                settingsMenu.classList.toggle('hidden');
+            });
+            document.addEventListener('click', function() {
+                settingsMenu.classList.add('hidden');
+            });
+        }
+        
+        var flashes = document.querySelectorAll('#flash-container > div');
+        flashes.forEach(function(flash) {
+            setTimeout(function() {
+                flash.classList.remove('toast-enter');
+                flash.classList.add('toast-leave');
+                setTimeout(function() {
+                    flash.remove();
+                }, 200);
+            }, 3000);
+        });
+    });
+    </script>

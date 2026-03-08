@@ -1,273 +1,245 @@
 package db
 
 import (
-	"errors"
-	"fmt"
-	"net/url"
-	"path/filepath"
-	"slices"
-	"strings"
+	"regexp"
 	"time"
 
 	"github.com/glebarez/sqlite"
-	"gorm.io/driver/mysql"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm/logger"
-
 	"github.com/rs/zerolog/log"
-	"github.com/thomiceli/opengist/internal/config"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
-var db *gorm.DB
+var DB *gorm.DB
+
+type User struct {
+	ID        uint   `gorm:"primaryKey"`
+	Username  string `gorm:"uniqueIndex,size:191"`
+	Password  string
+	CreatedAt int64
+}
+
+type Visibility int
 
 const (
-	SQLite databaseType = iota
-	PostgreSQL
-	MySQL
+	PublicVisibility  Visibility = 0
+	PrivateVisibility Visibility = 1
 )
 
-type databaseType int
-
-func (d databaseType) String() string {
-	return [...]string{"SQLite", "PostgreSQL", "MySQL"}[d]
+func (v Visibility) String() string {
+	if v == PrivateVisibility {
+		return "private"
+	}
+	return "public"
 }
 
-type databaseInfo struct {
-	Type     databaseType
-	Host     string
-	Port     string
-	User     string
-	Password string
-	Database string
-	SSLMode  string
+type Gist struct {
+	ID         uint       `gorm:"primaryKey"`
+	Title      string     `gorm:"uniqueIndex,size:191"`
+	Filename   string
+	Content    string
+	Visibility Visibility `gorm:"default:0"`
+	UserID     uint
+	CreatedAt  int64
+	UpdatedAt  int64
 }
 
-var DatabaseInfo *databaseInfo
-
-func parseDBURI(uri string) (*databaseInfo, error) {
-	info := &databaseInfo{}
-
-	info.SSLMode = "disable"
-
-	if uri == ":memory:" {
-		info.Type = SQLite
-		info.Database = uri
-		return info, nil
-	}
-
-	u, err := url.Parse(uri)
-	if err != nil {
-		return nil, fmt.Errorf("invalid URI: %v", err)
-	}
-
-	if u.Scheme == "" {
-		info.Type = SQLite
-		info.Database = filepath.Join(config.GetHomeDir(), uri)
-		return info, nil
-	}
-
-	switch u.Scheme {
-	case "postgres", "postgresql":
-		info.Type = PostgreSQL
-	case "mysql", "mariadb":
-		info.Type = MySQL
-	case "file":
-		info.Type = SQLite
-	default:
-		return nil, fmt.Errorf("unknown database: %v", err)
-	}
-
-	if u.Host != "" {
-		host, port, _ := strings.Cut(u.Host, ":")
-		info.Host = host
-		info.Port = port
-	}
-
-	if u.User != nil {
-		info.User = u.User.Username()
-		info.Password, _ = u.User.Password()
-	}
-
-	if u.RawQuery != "" {
-		q, _ := url.ParseQuery(u.RawQuery)
-		if sslmode := q.Get("sslmode"); sslmode != "" && info.Type == PostgreSQL {
-			info.SSLMode = sslmode
-		}
-	}
-
-	switch info.Type {
-	case PostgreSQL, MySQL:
-		info.Database = strings.TrimPrefix(u.Path, "/")
-	case SQLite:
-		info.Database = u.String()
-	default:
-		return nil, fmt.Errorf("unknown database: %v", err)
-	}
-
-	return info, nil
+type Revision struct {
+	ID         uint `gorm:"primaryKey"`
+	GistID     uint `gorm:"index"`
+	Version    int
+	Title      string
+	Filename   string
+	Content    string
+	Visibility Visibility
+	CreatedAt  int64
 }
 
-func Setup(dbUri string) error {
-	dbInfo, err := parseDBURI(dbUri)
-	if err != nil {
-		return err
-	}
+var titleRegex = regexp.MustCompile(`^[A-Za-z0-9]+$`)
 
-	log.Info().Msgf("Setting up a %s database connection", dbInfo.Type)
-	var setupFunc func(databaseInfo) error
-	switch dbInfo.Type {
-	case SQLite:
-		setupFunc = setupSQLite
-	case PostgreSQL:
-		setupFunc = setupPostgres
-	case MySQL:
-		setupFunc = setupMySQL
-	default:
-		return fmt.Errorf("unknown database type: %v", dbInfo.Type)
-	}
+func IsValidTitle(title string) bool {
+	return titleRegex.MatchString(title)
+}
 
-	maxAttempts := 60
-	retryInterval := 1 * time.Second
-
-	for attempt := 1; attempt <= maxAttempts; attempt++ {
-		err = setupFunc(*dbInfo)
-		if err == nil {
-			log.Info().Msg("Database connection established")
-			break
-		}
-
-		if attempt < maxAttempts {
-			log.Warn().Err(err).Msgf("Failed to connect to database (attempt %d), retrying in %v...", attempt, retryInterval)
-			time.Sleep(retryInterval)
-		} else {
-			return err
-		}
-	}
-
-	DatabaseInfo = dbInfo
-
-	if err = db.SetupJoinTable(&Gist{}, "Likes", &Like{}); err != nil {
-		return err
-	}
-
-	if err = db.SetupJoinTable(&User{}, "Liked", &Like{}); err != nil {
-		return err
-	}
-
-	if err = db.AutoMigrate(&User{}, &Gist{}, &SSHKey{}, &AdminSetting{}, &Invitation{}, &WebAuthnCredential{}, &TOTP{}, &GistTopic{}, &GistLanguage{}, &GistInitQueue{}, &AccessToken{}); err != nil {
-		return err
-	}
-
-	if err = applyMigrations(dbInfo); err != nil {
-		return err
-	}
-
-	// Default admin setting values
-	return initAdminSettings(map[string]string{
-		SettingDisableSignup:          "0",
-		SettingRequireLogin:           "0",
-		SettingAllowGistsWithoutLogin: "0",
-		SettingDisableLoginForm:       "0",
-		SettingDisableGravatar:        "0",
+func Setup(dbPath string) error {
+	var err error
+	DB, err = gorm.Open(sqlite.Open(dbPath), &gorm.Config{
+		Logger:         logger.Default.LogMode(logger.Silent),
+		TranslateError: true,
 	})
+	if err != nil {
+		return err
+	}
+
+	log.Info().Msg("Database connection established")
+
+	if err = DB.AutoMigrate(&User{}, &Gist{}, &Revision{}); err != nil {
+		return err
+	}
+
+	if err = initAdminUser(); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func Close() error {
-	sqlDB, err := db.DB()
+	sqlDB, err := DB.DB()
 	if err != nil {
 		return err
 	}
 	return sqlDB.Close()
 }
 
-func CountAll(table interface{}) (int64, error) {
+func initAdminUser() error {
 	var count int64
-	err := db.Model(table).Count(&count).Error
-	return count, err
-}
-
-func IsUniqueConstraintViolation(err error) bool {
-	return errors.Is(err, gorm.ErrDuplicatedKey)
-}
-
-func Ping() error {
-	sql, err := db.DB()
-	if err != nil {
-		return err
-	}
-
-	return sql.Ping()
-}
-
-func setupSQLite(dbInfo databaseInfo) error {
-	var err error
-	var dsn string
-	journalMode := strings.ToUpper(config.C.SqliteJournalMode)
-
-	if !slices.Contains([]string{"DELETE", "TRUNCATE", "PERSIST", "MEMORY", "WAL", "OFF"}, journalMode) {
-		log.Warn().Msg("Invalid SQLite journal mode: " + journalMode)
-	}
-
-	if dbInfo.Database == ":memory:" {
-		dsn = ":memory:?_fk=true&cache=shared"
-	} else {
-		u, err := url.Parse(dbInfo.Database)
+	DB.Model(&User{}).Count(&count)
+	if count == 0 {
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte("123456"), bcrypt.DefaultCost)
 		if err != nil {
 			return err
 		}
-
-		u.Scheme = "file"
-		q := u.Query()
-		q.Set("_pragma", "foreign_keys(1)")
-		q.Set("_journal_mode", journalMode)
-		u.RawQuery = q.Encode()
-		dsn = u.String()
+		admin := &User{
+			Username:  "admin",
+			Password:  string(hashedPassword),
+			CreatedAt: time.Now().Unix(),
+		}
+		if err := DB.Create(admin).Error; err != nil {
+			return err
+		}
+		log.Info().Msg("Default admin user created (password: 123456)")
 	}
-	db, err = gorm.Open(sqlite.Open(dsn), &gorm.Config{
-		Logger:         logger.Default.LogMode(logger.Silent),
-		TranslateError: true,
-	})
-	return err
+	return nil
 }
 
-func setupPostgres(dbInfo databaseInfo) error {
-	var err error
-	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s", dbInfo.Host, dbInfo.Port, dbInfo.User, dbInfo.Password, dbInfo.Database, dbInfo.SSLMode)
-
-	db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{
-		Logger:         logger.Default.LogMode(logger.Silent),
-		TranslateError: true,
-	})
-
-	return err
+func GetUserByUsername(username string) (*User, error) {
+	user := new(User)
+	err := DB.Where("username = ?", username).First(&user).Error
+	return user, err
 }
 
-func setupMySQL(dbInfo databaseInfo) error {
-	var err error
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local", dbInfo.User, dbInfo.Password, dbInfo.Host, dbInfo.Port, dbInfo.Database)
-
-	db, err = gorm.Open(mysql.New(mysql.Config{
-		DSN:                    dsn,
-		DontSupportRenameIndex: true,
-	}), &gorm.Config{
-		Logger:         logger.Default.LogMode(logger.Silent),
-		TranslateError: true,
-	})
-
-	return err
+func GetUserById(id uint) (*User, error) {
+	user := new(User)
+	err := DB.Where("id = ?", id).First(&user).Error
+	return user, err
 }
 
-func DeprecationDBFilename() {
-	if config.C.DBFilename != "" {
-		log.Warn().Msg("The 'db-filename'/'OG_DB_FILENAME' configuration option is deprecated and will be removed in a future version. Please use 'db-uri'/'OG_DB_URI' instead.")
+func (u *User) SetPassword(password string) error {
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return err
 	}
-
-	if config.C.DBUri == "" {
-		config.C.DBUri = config.C.DBFilename
-	}
+	u.Password = string(hashedPassword)
+	return nil
 }
 
-func TruncateDatabase() error {
-	return db.Migrator().DropTable("likes", &User{}, "gists", &SSHKey{}, &AdminSetting{}, &Invitation{}, &WebAuthnCredential{}, &TOTP{}, &GistTopic{}, &GistLanguage{}, &GistInitQueue{}, &AccessToken{})
+func (u *User) VerifyPassword(password string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password))
+	return err == nil
+}
+
+func (u *User) Update() error {
+	return DB.Save(u).Error
+}
+
+func TitleExists(title string, excludeId uint) (bool, error) {
+	var count int64
+	query := DB.Model(&Gist{}).Where("title = ?", title)
+	if excludeId > 0 {
+		query = query.Where("id != ?", excludeId)
+	}
+	err := query.Count(&count).Error
+	return count > 0, err
+}
+
+func (g *Gist) Create() error {
+	g.CreatedAt = time.Now().Unix()
+	g.UpdatedAt = g.CreatedAt
+	return DB.Create(g).Error
+}
+
+func (g *Gist) Update() error {
+	g.UpdatedAt = time.Now().Unix()
+	return DB.Save(g).Error
+}
+
+func (g *Gist) Delete() error {
+	return DB.Delete(g).Error
+}
+
+func GetGistByTitle(title string) (*Gist, error) {
+	gist := new(Gist)
+	err := DB.Where("title = ?", title).First(&gist).Error
+	return gist, err
+}
+
+func GetGistById(id uint) (*Gist, error) {
+	gist := new(Gist)
+	err := DB.Where("id = ?", id).First(&gist).Error
+	return gist, err
+}
+
+func GetAllGists(offset int, sort string, order string) ([]*Gist, error) {
+	var gists []*Gist
+	err := DB.Limit(11).
+		Offset(offset * 10).
+		Order(sort + "_at " + order).
+		Find(&gists).Error
+	return gists, err
+}
+
+func SearchGists(query string, offset int, sort string, order string) ([]*Gist, error) {
+	var gists []*Gist
+	err := DB.Where("title LIKE ?", "%"+query+"%").
+		Limit(11).
+		Offset(offset * 10).
+		Order(sort + "_at " + order).
+		Find(&gists).Error
+	return gists, err
+}
+
+func CountAllGists() (int64, error) {
+	var count int64
+	err := DB.Model(&Gist{}).Count(&count).Error
+	return count, err
+}
+
+func CountSearchGists(query string) (int64, error) {
+	var count int64
+	err := DB.Model(&Gist{}).Where("title LIKE ?", "%"+query+"%").Count(&count).Error
+	return count, err
+}
+
+func (r *Revision) Create() error {
+	r.CreatedAt = time.Now().Unix()
+	return DB.Create(r).Error
+}
+
+func GetNextVersion(gistId uint) (int, error) {
+	var maxVersion int
+	err := DB.Model(&Revision{}).
+		Where("gist_id = ?", gistId).
+		Select("COALESCE(MAX(version), 0)").
+		Scan(&maxVersion).Error
+	return maxVersion + 1, err
+}
+
+func GetRevisionsByGistId(gistId uint) ([]*Revision, error) {
+	var revisions []*Revision
+	err := DB.Where("gist_id = ?", gistId).
+		Order("version DESC").
+		Find(&revisions).Error
+	return revisions, err
+}
+
+func GetRevisionByGistIdAndVersion(gistId uint, version int) (*Revision, error) {
+	revision := new(Revision)
+	err := DB.Where("gist_id = ? AND version = ?", gistId, version).First(&revision).Error
+	return revision, err
+}
+
+func DeleteRevisionsByGistId(gistId uint) error {
+	return DB.Where("gist_id = ?", gistId).Delete(&Revision{}).Error
 }

@@ -1,0 +1,37 @@
+{{template "header.html" .}}
+<div class="max-w-4xl mx-auto px-6 py-8">
+    <form action="/{{.gist.Title}}/edit" method="post" class="flex flex-col gap-6">
+        <div>
+            <input type="text" name="title" value="{{.gist.Title}}"
+                class="w-full text-4xl font-bold text-slate-800 bg-transparent border-0 border-b-2 border-transparent focus:border-slate-200 focus:ring-0 px-0 py-2 placeholder-slate-300 transition-colors" 
+                placeholder="Title (alphanumeric only)" required pattern="[A-Za-z0-9]+">
+        </div>
+        
+        <div class="flex flex-wrap items-center gap-4">
+            <div class="flex items-center gap-2">
+                <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <select name="visibility" class="bg-slate-100 rounded-lg px-3 py-2 text-slate-700 text-sm border-0 focus:ring-2 focus:ring-indigo-500/20 transition-all">
+                    <option value="public" {{if eq (toInt .gist.Visibility) 0}}selected{{end}}>Public</option>
+                    <option value="private" {{if eq (toInt .gist.Visibility) 1}}selected{{end}}>Private</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            <textarea name="content" rows="20"
+                class="w-full bg-slate-900 text-slate-100 font-mono text-sm p-6 border-0 focus:ring-0 resize-none placeholder-slate-500" 
+                placeholder="// Write your code here..." required>{{.gist.Content}}</textarea>
+        </div>
+        
+        <div class="flex items-center justify-end gap-3">
+            <a href="/{{.gist.Title}}/detail" class="px-6 py-2.5 text-slate-500 hover:text-slate-700 transition-colors">
+                取消
+            </a>
+            <button type="submit" 
+                class="px-6 py-2.5 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 transition-all active:scale-[0.98] shadow-lg shadow-indigo-500/25">
+                保存
+            </button>
+        </div>
+    </form>
+</div>
+{{template "footer.html" .}}
